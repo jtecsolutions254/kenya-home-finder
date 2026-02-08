@@ -1,12 +1,22 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Search, PlusCircle, Menu, X } from "lucide-react";
+import { Home, Search, PlusCircle, Menu, X, LogIn, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const { user, loading, signOut } = useAuth();
 
   const links = [
     { to: "/", label: "Home", icon: Home },
@@ -15,6 +25,17 @@ const Navbar = () => {
   ];
 
   const isActive = (path: string) => location.pathname === path;
+
+  const getInitials = () => {
+    const name = user?.user_metadata?.full_name || user?.email || "";
+    if (name.includes("@")) return name[0].toUpperCase();
+    return name
+      .split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b">
@@ -42,6 +63,44 @@ const Navbar = () => {
               </Button>
             </Link>
           ))}
+
+          {!loading && (
+            <>
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="ml-2 rounded-full">
+                      <Avatar className="w-8 h-8">
+                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                          {getInitials()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <div className="px-2 py-1.5">
+                      <p className="text-sm font-medium truncate">
+                        {user.user_metadata?.full_name || "User"}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={signOut} className="text-destructive cursor-pointer">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link to="/auth">
+                  <Button variant="outline" size="sm" className="ml-2 gap-2">
+                    <LogIn className="w-4 h-4" />
+                    Sign In
+                  </Button>
+                </Link>
+              )}
+            </>
+          )}
         </div>
 
         {/* Mobile toggle */}
@@ -76,6 +135,39 @@ const Navbar = () => {
                   </Button>
                 </Link>
               ))}
+
+              {!loading && (
+                <>
+                  {user ? (
+                    <>
+                      <div className="px-3 py-2 border-t mt-1 pt-2">
+                        <p className="text-sm font-medium truncate">
+                          {user.user_metadata?.full_name || "User"}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start gap-2 text-destructive"
+                        onClick={() => {
+                          signOut();
+                          setMobileOpen(false);
+                        }}
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Sign Out
+                      </Button>
+                    </>
+                  ) : (
+                    <Link to="/auth" onClick={() => setMobileOpen(false)}>
+                      <Button variant="outline" className="w-full justify-start gap-2 mt-1">
+                        <LogIn className="w-4 h-4" />
+                        Sign In
+                      </Button>
+                    </Link>
+                  )}
+                </>
+              )}
             </div>
           </motion.div>
         )}
