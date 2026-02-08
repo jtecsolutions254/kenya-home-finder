@@ -1,6 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import type { Database } from "@/integrations/supabase/types";
+
+type AppRole = Database["public"]["Enums"]["app_role"];
+type UserType = Database["public"]["Enums"]["user_type"];
 
 export const useIsAdmin = () => {
   const { user } = useAuth();
@@ -29,6 +33,65 @@ export const useAllProfiles = () => {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
+    },
+  });
+};
+
+export const useAllUserRoles = () => {
+  return useQuery({
+    queryKey: ["user_roles", "all"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("*");
+      if (error) throw error;
+      return data;
+    },
+  });
+};
+
+export const useUpdateUserType = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ profileId, userType }: { profileId: string; userType: UserType }) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ user_type: userType })
+        .eq("id", profileId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profiles", "all"] });
+    },
+  });
+};
+
+export const useUpdateUserRole = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
+      // Upsert: update existing role or insert new one
+      const { data: existing } = await supabase
+        .from("user_roles")
+        .select("id")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (existing) {
+        const { error } = await supabase
+          .from("user_roles")
+          .update({ role })
+          .eq("user_id", userId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("user_roles")
+          .insert({ user_id: userId, role });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user_roles", "all"] });
     },
   });
 };
