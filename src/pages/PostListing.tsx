@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,15 +7,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { counties, propertyTypes } from "@/lib/mock-data";
 import { useAuth } from "@/hooks/useAuth";
+import { useCurrentProfile, updateProfilePhone } from "@/hooks/useProfile";
 import { useCreateListing, uploadListingImages } from "@/hooks/useListings";
 import { toast } from "sonner";
-import { Upload, Send, X, Loader2, ImageIcon } from "lucide-react";
+import { Upload, Send, X, Loader2, ImageIcon, ShieldAlert } from "lucide-react";
 
 const amenitiesList = ["Parking", "Security", "Pool", "Gym", "Garden", "Backup Water", "CCTV", "Lift"];
 
 const PostListing = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const { data: profile, isLoading: profileLoading } = useCurrentProfile();
   const createListing = useCreateListing();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -27,10 +29,21 @@ const PostListing = () => {
   const [bedrooms, setBedrooms] = useState("");
   const [bathrooms, setBathrooms] = useState("");
   const [description, setDescription] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  // Pre-fill contact details from profile/auth
+  useEffect(() => {
+    if (profile?.phone) setContactPhone(profile.phone);
+    if (user?.email) setContactEmail(user.email);
+  }, [profile, user]);
+
+  const isOwner = profile?.user_type === "owner";
+  const loading = authLoading || profileLoading;
 
   const toggleAmenity = (amenity: string) => {
     setSelectedAmenities((prev) =>
@@ -81,8 +94,18 @@ const PostListing = () => {
       return;
     }
 
+    if (!isOwner) {
+      toast.error("Only house owners can post listings");
+      return;
+    }
+
     if (!county || !type) {
       toast.error("Please select county and property type");
+      return;
+    }
+
+    if (!contactPhone) {
+      toast.error("Please provide a contact phone number");
       return;
     }
 
@@ -92,6 +115,11 @@ const PostListing = () => {
       let imageUrls: string[] = [];
       if (files.length > 0) {
         imageUrls = await uploadListingImages(user.id, files);
+      }
+
+      // Also update profile phone if changed
+      if (contactPhone && contactPhone !== profile?.phone) {
+        await updateProfilePhone(user.id, contactPhone);
       }
 
       await createListing.mutateAsync({
@@ -106,6 +134,8 @@ const PostListing = () => {
         type,
         amenities: selectedAmenities,
         images: imageUrls,
+        contact_phone: contactPhone,
+        contact_email: contactEmail || undefined,
       });
 
       toast.success("Listing submitted! It will appear after admin review.");
@@ -116,6 +146,39 @@ const PostListing = () => {
       setSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="container max-w-2xl py-20 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="container max-w-2xl py-20 text-center">
+        <ShieldAlert className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+        <h2 className="font-heading text-2xl font-bold mb-2">Sign in Required</h2>
+        <p className="text-muted-foreground mb-6">You need to sign in to post a listing.</p>
+        <Button onClick={() => navigate("/auth")}>Sign In</Button>
+      </div>
+    );
+  }
+
+  if (!isOwner) {
+    return (
+      <div className="container max-w-2xl py-20 text-center">
+        <ShieldAlert className="w-12 h-12 mx-auto text-destructive mb-4" />
+        <h2 className="font-heading text-2xl font-bold mb-2">House Owners Only</h2>
+        <p className="text-muted-foreground mb-6">
+          Only accounts registered as "House Owner" can post listings.
+          If you're a house owner, please create an account with the owner role.
+        </p>
+        <Button variant="outline" onClick={() => navigate("/browse")}>Browse Listings</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-2xl py-8">
@@ -202,6 +265,35 @@ const PostListing = () => {
                 value={bathrooms}
                 onChange={(e) => setBathrooms(e.target.value)}
               />
+            </div>
+          </div>
+
+          {/* Owner Contact Details */}
+          <div className="bg-muted/50 border rounded-lg p-4 space-y-3">
+            <h3 className="text-sm font-semibold">Your Contact Details</h3>
+            <p className="text-xs text-muted-foreground">
+              House seekers will use these to reach you directly via call, WhatsApp, or email.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-1.5 block">Phone Number *</label>
+                <Input
+                  type="tel"
+                  placeholder="+254 712 345 678"
+                  required
+                  value={contactPhone}
+                  onChange={(e) => setContactPhone(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1.5 block">Email</label>
+                <Input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                />
+              </div>
             </div>
           </div>
 
