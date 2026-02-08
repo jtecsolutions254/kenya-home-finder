@@ -1,17 +1,24 @@
 import { useParams, Link } from "react-router-dom";
-import { MapPin, Bed, Bath, Star, ArrowLeft, Calendar, CheckCircle2 } from "lucide-react";
+import { MapPin, Bed, Bath, Star, ArrowLeft, Calendar, CheckCircle2, ImageIcon, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import ContactForm from "@/components/ContactForm";
-import { mockListings } from "@/lib/mock-data";
+import { useListingById } from "@/hooks/useListings";
 import { motion } from "framer-motion";
+import { formatDistanceToNow } from "date-fns";
 
 const ListingDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const { data: listing, isLoading } = useListingById(id || "");
 
-  // Use mock data for now — will migrate to DB later
-  const listing = mockListings.find((l) => l.id === id);
+  if (isLoading) {
+    return (
+      <div className="container py-20 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!listing) {
     return (
@@ -29,12 +36,8 @@ const ListingDetail = () => {
     );
   }
 
-  // Generate additional mock images for the gallery
-  const images = [
-    listing.image,
-    listing.image.replace("w=600", "w=601"),
-    listing.image.replace("w=600", "w=602"),
-  ];
+  const images = listing.images?.length ? listing.images : [];
+  const postedAt = formatDistanceToNow(new Date(listing.created_at), { addSuffix: true });
 
   return (
     <div className="container py-8">
@@ -54,24 +57,34 @@ const ListingDetail = () => {
             animate={{ opacity: 1, y: 0 }}
             className="grid grid-cols-1 md:grid-cols-3 gap-3"
           >
-            <div className="md:col-span-2 rounded-xl overflow-hidden h-72 md:h-80">
-              <img
-                src={images[0]}
-                alt={listing.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="hidden md:grid grid-rows-2 gap-3">
-              {images.slice(1).map((img, i) => (
-                <div key={i} className="rounded-xl overflow-hidden">
+            {images.length > 0 ? (
+              <>
+                <div className="md:col-span-2 rounded-xl overflow-hidden h-72 md:h-80">
                   <img
-                    src={img}
-                    alt={`${listing.title} ${i + 2}`}
+                    src={images[0]}
+                    alt={listing.title}
                     className="w-full h-full object-cover"
                   />
                 </div>
-              ))}
-            </div>
+                {images.length > 1 && (
+                  <div className="hidden md:grid grid-rows-2 gap-3">
+                    {images.slice(1, 3).map((img, i) => (
+                      <div key={i} className="rounded-xl overflow-hidden">
+                        <img
+                          src={img}
+                          alt={`${listing.title} ${i + 2}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="md:col-span-3 rounded-xl overflow-hidden h-72 md:h-80 bg-muted flex items-center justify-center">
+                <ImageIcon className="w-16 h-16 text-muted-foreground/40" />
+              </div>
+            )}
           </motion.div>
 
           {/* Title & meta */}
@@ -86,10 +99,12 @@ const ListingDetail = () => {
                   <Badge className="bg-primary text-primary-foreground">
                     {listing.type}
                   </Badge>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Star className="w-3.5 h-3.5 fill-accent text-accent" />
-                    {listing.rating}
-                  </div>
+                  {listing.rating != null && listing.rating > 0 && (
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Star className="w-3.5 h-3.5 fill-accent text-accent" />
+                      {listing.rating}
+                    </div>
+                  )}
                 </div>
                 <h1 className="font-heading text-2xl md:text-3xl font-bold text-foreground">
                   {listing.title}
@@ -115,7 +130,7 @@ const ListingDetail = () => {
                 <Bath className="w-4 h-4" /> {listing.bathrooms} Bathroom{listing.bathrooms !== 1 ? "s" : ""}
               </span>
               <span className="flex items-center gap-1.5">
-                <Calendar className="w-4 h-4" /> Posted {listing.postedAt}
+                <Calendar className="w-4 h-4" /> Posted {postedAt}
               </span>
             </div>
           </motion.div>
@@ -129,62 +144,34 @@ const ListingDetail = () => {
             transition={{ delay: 0.2 }}
           >
             <h2 className="font-heading text-xl font-semibold mb-3">About this property</h2>
-            <p className="text-muted-foreground leading-relaxed">
+            <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
               {listing.description}
-            </p>
-            <p className="text-muted-foreground leading-relaxed mt-3">
-              This property is located in {listing.location}, offering easy access to local amenities,
-              public transportation, and shopping centers. The neighborhood is well-established with a
-              mix of residential and commercial areas, making it ideal for both families and professionals.
             </p>
           </motion.div>
 
           <Separator />
 
           {/* Amenities */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <h2 className="font-heading text-xl font-semibold mb-4">Amenities</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {listing.amenities.map((amenity) => (
-                <div
-                  key={amenity}
-                  className="flex items-center gap-2 text-sm bg-muted rounded-lg px-3 py-2.5"
-                >
-                  <CheckCircle2 className="w-4 h-4 text-secondary" />
-                  {amenity}
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          <Separator />
-
-          {/* Owner */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <h2 className="font-heading text-xl font-semibold mb-3">Listed by</h2>
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="font-heading text-lg font-bold text-primary">
-                  {listing.owner
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
-                </span>
+          {listing.amenities && listing.amenities.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <h2 className="font-heading text-xl font-semibold mb-4">Amenities</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {listing.amenities.map((amenity) => (
+                  <div
+                    key={amenity}
+                    className="flex items-center gap-2 text-sm bg-muted rounded-lg px-3 py-2.5"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-secondary" />
+                    {amenity}
+                  </div>
+                ))}
               </div>
-              <div>
-                <p className="font-medium">{listing.owner}</p>
-                <p className="text-sm text-muted-foreground">Property Owner</p>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          )}
         </div>
 
         {/* Sidebar */}
@@ -194,7 +181,7 @@ const ListingDetail = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <ContactForm listingId={listing.id} ownerName={listing.owner} />
+            <ContactForm listingId={listing.id} />
           </motion.div>
 
           {/* Quick summary card */}

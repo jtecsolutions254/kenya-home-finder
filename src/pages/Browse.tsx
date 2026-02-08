@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import ListingCard from "@/components/ListingCard";
-import { mockListings, counties, propertyTypes } from "@/lib/mock-data";
+import { counties, propertyTypes } from "@/lib/mock-data";
+import { useApprovedListings } from "@/hooks/useListings";
 
 const Browse = () => {
   const [search, setSearch] = useState("");
@@ -14,8 +15,11 @@ const Browse = () => {
   const [maxPrice, setMaxPrice] = useState(150000);
   const [showFilters, setShowFilters] = useState(false);
 
+  const { data: listings, isLoading } = useApprovedListings();
+
   const filtered = useMemo(() => {
-    return mockListings.filter((l) => {
+    if (!listings) return [];
+    return listings.filter((l) => {
       const matchesSearch = l.title.toLowerCase().includes(search.toLowerCase()) ||
         l.location.toLowerCase().includes(search.toLowerCase());
       const matchesCounty = county === "all" || l.county === county;
@@ -23,7 +27,7 @@ const Browse = () => {
       const matchesPrice = l.price <= maxPrice;
       return matchesSearch && matchesCounty && matchesType && matchesPrice;
     });
-  }, [search, county, type, maxPrice]);
+  }, [listings, search, county, type, maxPrice]);
 
   return (
     <div className="container py-8">
@@ -97,20 +101,28 @@ const Browse = () => {
       )}
 
       {/* Results */}
-      <p className="text-sm text-muted-foreground mb-4">{filtered.length} houses found</p>
-      {filtered.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((listing, i) => (
-            <ListingCard key={listing.id} listing={listing} index={i} />
-          ))}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       ) : (
-        <div className="text-center py-20">
-          <p className="text-muted-foreground text-lg">No houses match your filters.</p>
-          <Button variant="outline" className="mt-4" onClick={() => { setSearch(""); setCounty("all"); setType("all"); setMaxPrice(150000); }}>
-            Clear Filters
-          </Button>
-        </div>
+        <>
+          <p className="text-sm text-muted-foreground mb-4">{filtered.length} houses found</p>
+          {filtered.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filtered.map((listing, i) => (
+                <ListingCard key={listing.id} listing={listing} index={i} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20">
+              <p className="text-muted-foreground text-lg">No houses match your filters.</p>
+              <Button variant="outline" className="mt-4" onClick={() => { setSearch(""); setCounty("all"); setType("all"); setMaxPrice(150000); }}>
+                Clear Filters
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -68,6 +68,36 @@ export const useAllListings = () => {
   });
 };
 
+export const useCreateListing = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (listing: {
+      owner_id: string;
+      title: string;
+      description: string;
+      location: string;
+      county: string;
+      price: number;
+      bedrooms: number;
+      bathrooms: number;
+      type: string;
+      amenities: string[];
+      images: string[];
+    }) => {
+      const { data, error } = await supabase
+        .from("listings")
+        .insert(listing)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["listings"] });
+    },
+  });
+};
+
 export const useUpdateListingStatus = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -116,4 +146,24 @@ export const useCreateInquiry = () => {
       if (error) throw error;
     },
   });
+};
+
+export const uploadListingImages = async (
+  userId: string,
+  files: File[]
+): Promise<string[]> => {
+  const urls: string[] = [];
+  for (const file of files) {
+    const ext = file.name.split(".").pop();
+    const path = `${userId}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("listing-images")
+      .upload(path, file, { upsert: false });
+    if (error) throw error;
+    const { data: urlData } = supabase.storage
+      .from("listing-images")
+      .getPublicUrl(path);
+    urls.push(urlData.publicUrl);
+  }
+  return urls;
 };
