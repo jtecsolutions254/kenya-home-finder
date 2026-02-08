@@ -26,8 +26,9 @@ const Footer = () => (
         <div>
           <h4 className="font-heading font-semibold mb-3">Contact</h4>
           <div className="flex flex-col gap-2 text-sm opacity-70">
-            <span>info@patanyumba.co.ke</span>
-            <span>+254 700 000 000</span>
+            <a href="mailto:josephkiseko3@gmail.com" className="hover:opacity-100 transition-opacity">josephkiseko3@gmail.com</a>
+            <a href="tel:+25411423420" className="hover:opacity-100 transition-opacity">+25411423420</a>
+            <a href="https://wa.me/25411423420" target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity">WhatsApp: +25411423420</a>
             <span>Nairobi, Kenya</span>
           </div>
         </div>
