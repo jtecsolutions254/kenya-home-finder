@@ -3,14 +3,16 @@ import { MapPin, Bed, Bath, Star, ArrowLeft, Calendar, CheckCircle2, ImageIcon, 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import ContactForm from "@/components/ContactForm";
+import OwnerContactCard from "@/components/OwnerContactCard";
 import { useListingById } from "@/hooks/useListings";
+import { useProfileByUserId } from "@/hooks/useProfile";
 import { motion } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
 
 const ListingDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { data: listing, isLoading } = useListingById(id || "");
+  const { data: ownerProfile } = useProfileByUserId(listing?.owner_id || "");
 
   if (isLoading) {
     return (
@@ -181,7 +183,11 @@ const ListingDetail = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <ContactForm listingId={listing.id} />
+            <OwnerContactCard
+              ownerName={ownerProfile?.full_name || undefined}
+              contactPhone={listing.contact_phone || ownerProfile?.phone}
+              contactEmail={listing.contact_email || undefined}
+            />
           </motion.div>
 
           {/* Quick summary card */}

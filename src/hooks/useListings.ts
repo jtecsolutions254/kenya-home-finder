@@ -19,6 +19,8 @@ export interface DbListing {
   images: string[];
   status: ListingStatus;
   rating: number | null;
+  contact_phone: string | null;
+  contact_email: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -83,6 +85,8 @@ export const useCreateListing = () => {
       type: string;
       amenities: string[];
       images: string[];
+      contact_phone?: string;
+      contact_email?: string;
     }) => {
       const { data, error } = await supabase
         .from("listings")

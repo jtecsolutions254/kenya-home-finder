@@ -60,6 +60,8 @@ export type Database = {
           amenities: string[] | null
           bathrooms: number
           bedrooms: number
+          contact_email: string | null
+          contact_phone: string | null
           county: string
           created_at: string
           description: string
@@ -78,6 +80,8 @@ export type Database = {
           amenities?: string[] | null
           bathrooms?: number
           bedrooms?: number
+          contact_email?: string | null
+          contact_phone?: string | null
           county: string
           created_at?: string
           description?: string
@@ -96,6 +100,8 @@ export type Database = {
           amenities?: string[] | null
           bathrooms?: number
           bedrooms?: number
+          contact_email?: string | null
+          contact_phone?: string | null
           county?: string
           created_at?: string
           description?: string
