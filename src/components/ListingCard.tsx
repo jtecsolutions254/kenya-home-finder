@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Listing } from "@/lib/mock-data";
 import { MapPin, Bed, Bath, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -10,12 +11,13 @@ interface ListingCardProps {
 
 const ListingCard = ({ listing, index = 0 }: ListingCardProps) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.1 }}
-      className="group rounded-xl overflow-hidden bg-card border hover:shadow-xl transition-all duration-300 cursor-pointer"
-    >
+    <Link to={`/listing/${listing.id}`}>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: index * 0.1 }}
+        className="group rounded-xl overflow-hidden bg-card border hover:shadow-xl transition-all duration-300 cursor-pointer"
+      >
       <div className="relative h-52 overflow-hidden">
         <img
           src={listing.image}
@@ -50,7 +52,8 @@ const ListingCard = ({ listing, index = 0 }: ListingCardProps) => {
           <span className="text-xs text-muted-foreground">/month</span>
         </div>
       </div>
-    </motion.div>
+      </motion.div>
+    </Link>
   );
 };
 
