@@ -14,6 +14,104 @@ export type Database = {
   }
   public: {
     Tables: {
+      listing_inquiries: {
+        Row: {
+          created_at: string
+          id: string
+          listing_id: string
+          message: string
+          sender_email: string
+          sender_id: string | null
+          sender_name: string
+          sender_phone: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          listing_id: string
+          message: string
+          sender_email: string
+          sender_id?: string | null
+          sender_name: string
+          sender_phone?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          listing_id?: string
+          message?: string
+          sender_email?: string
+          sender_id?: string | null
+          sender_name?: string
+          sender_phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_inquiries_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listings: {
+        Row: {
+          amenities: string[] | null
+          bathrooms: number
+          bedrooms: number
+          county: string
+          created_at: string
+          description: string
+          id: string
+          images: string[] | null
+          location: string
+          owner_id: string
+          price: number
+          rating: number | null
+          status: Database["public"]["Enums"]["listing_status"]
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          amenities?: string[] | null
+          bathrooms?: number
+          bedrooms?: number
+          county: string
+          created_at?: string
+          description?: string
+          id?: string
+          images?: string[] | null
+          location: string
+          owner_id: string
+          price: number
+          rating?: number | null
+          status?: Database["public"]["Enums"]["listing_status"]
+          title: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          amenities?: string[] | null
+          bathrooms?: number
+          bedrooms?: number
+          county?: string
+          created_at?: string
+          description?: string
+          id?: string
+          images?: string[] | null
+          location?: string
+          owner_id?: string
+          price?: number
+          rating?: number | null
+          status?: Database["public"]["Enums"]["listing_status"]
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -80,6 +178,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      listing_status: "pending" | "approved" | "rejected"
       user_type: "owner" | "seeker"
     }
     CompositeTypes: {
@@ -209,6 +308,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      listing_status: ["pending", "approved", "rejected"],
       user_type: ["owner", "seeker"],
     },
   },

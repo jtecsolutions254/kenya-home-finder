@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Search, PlusCircle, Menu, X, LogIn, LogOut, User } from "lucide-react";
+import { Home, Search, PlusCircle, Menu, X, LogIn, LogOut, User, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsAdmin } from "@/hooks/useAdmin";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +18,7 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const { user, loading, signOut } = useAuth();
+  const { data: isAdmin } = useIsAdmin();
 
   const links = [
     { to: "/", label: "Home", icon: Home },
@@ -85,6 +87,14 @@ const Navbar = () => {
                       <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                     </div>
                     <DropdownMenuSeparator />
+                    {isAdmin && (
+                      <DropdownMenuItem asChild className="cursor-pointer">
+                        <Link to="/admin">
+                          <Shield className="w-4 h-4 mr-2" />
+                          Admin Panel
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem onClick={signOut} className="text-destructive cursor-pointer">
                       <LogOut className="w-4 h-4 mr-2" />
                       Sign Out
@@ -146,6 +156,14 @@ const Navbar = () => {
                         </p>
                         <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                       </div>
+                      {isAdmin && (
+                        <Link to="/admin" onClick={() => setMobileOpen(false)}>
+                          <Button variant="ghost" className="w-full justify-start gap-2">
+                            <Shield className="w-4 h-4" />
+                            Admin Panel
+                          </Button>
+                        </Link>
+                      )}
                       <Button
                         variant="ghost"
                         className="w-full justify-start gap-2 text-destructive"
