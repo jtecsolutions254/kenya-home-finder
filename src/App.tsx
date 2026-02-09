@@ -55,10 +55,10 @@ const App = () => (
             {/* Public routes */}
             <Route element={<PublicLayout />}>
               <Route path="/" element={<Index />} />
-              <Route path="/browse" element={<Browse />} />
-              <Route path="/listing/:id" element={<ListingDetail />} />
-              <Route path="/post" element={<PostListing />} />
-              <Route path="/auth" element={<Auth />} />
+              <Route path="browse" element={<Browse />} />
+              <Route path="listing/:id" element={<ListingDetail />} />
+              <Route path="post" element={<PostListing />} />
+              <Route path="auth" element={<Auth />} />
             </Route>
 
             {/* 404 */}
